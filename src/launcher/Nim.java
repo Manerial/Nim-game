@@ -17,15 +17,39 @@ public class Nim {
 	private int playerNumber;
 	private boolean takeLast;
 
+	/**
+	 * Set the default Nim game
+	 * 
+	 * @throws JSONException
+	 */
 	public Nim() throws JSONException {
-		this(10, true);
+		this(10, true, "1,2,3");
 	}
 
-	public Nim(int startPosition, boolean takeLast) throws JSONException {
-		setGameStartPosition(startPosition);
+	/**
+	 * Initialize the game
+	 * 
+	 * @param nbSticks : the size (number of sticks) of the game
+	 * @param takeLast : if true, each player must take the last stick
+	 * @param plays    : the plays each player can do (example : take 1, 2 or 3
+	 *                 sticks each)
+	 * @throws JSONException
+	 */
+	public Nim(int nbSticks, boolean takeLast, String plays) throws JSONException {
+		setGameStartPosition(nbSticks);
 		setTakeLast(takeLast);
 		game.put("0", new JSONArray());
-		buildStickGame();
+
+		List<Integer> playList = getPlayList(plays);
+		buildStickGame(playList);
+	}
+
+	private List<Integer> getPlayList(String plays) {
+		List<Integer> playList = new ArrayList<>();
+		for (String play : plays.split(",")) {
+			playList.add(Integer.parseInt(play));
+		}
+		return playList;
 	}
 
 	public void setTakeLast(boolean takeLast) {
@@ -54,7 +78,7 @@ public class Nim {
 	 * 
 	 * @throws JSONException
 	 */
-	public void play() throws JSONException { 
+	public void play() throws JSONException {
 		reset();
 		DisplayIO.displayGame(game.toString());
 		DisplayIO.displayRule(takeLast);
@@ -65,7 +89,7 @@ public class Nim {
 			DisplayIO.displayMoves(moves.toString());
 			String move = readMove();
 			playMove(move);
-			if(isWinMove(move)) {
+			if (isWinMove(move)) {
 				System.err.println("Win position !");
 			}
 		} while (!currentPosition.equals("0"));
@@ -88,7 +112,7 @@ public class Nim {
 		} else {
 			JSONArray moves = getPlayableMoves(currentMove);
 			boolean winMove = true;
-			for(int moveNum = 0; moveNum < moves.length(); moveNum++) {
+			for (int moveNum = 0; moveNum < moves.length(); moveNum++) {
 				String move = moves.getString(moveNum);
 				winMove = !isWinMove(move) && winMove;
 			}
@@ -105,19 +129,15 @@ public class Nim {
 
 	/**
 	 * Build a basic stick game where you can take 1, 2 or 3 sticks
+	 * 
 	 * @throws JSONException
 	 */
-	private void buildStickGame() throws JSONException {
-		List<Integer> moves = new ArrayList<>();
-		moves.add(1);
-		moves.add(2);
-		moves.add(3);
-
+	private void buildStickGame(List<Integer> moves) throws JSONException {
 		for (Integer position = 0; position <= startPosition; position++) {
 			String positionStr = position.toString();
 			for (int moveNum = 0; moveNum < moves.size(); moveNum++) {
 				Integer nextPosition = position + moves.get(moveNum);
-				if(nextPosition <= startPosition) {
+				if (nextPosition <= startPosition) {
 					String nextPositionStr = nextPosition.toString();
 					JSONArray nextPositionOptions = getOrDefaultJsonArray(nextPositionStr);
 					nextPositionOptions.put(positionStr);
@@ -132,7 +152,8 @@ public class Nim {
 	 * Get a JSONArray using a key. If not found, return a new JSONArray
 	 * 
 	 * @param key : The key string to find the JSONArray
-	 * @return the JSONArray that correspond to the key, and a new JSONArray if not found.
+	 * @return the JSONArray that correspond to the key, and a new JSONArray if not
+	 *         found.
 	 * @throws JSONException
 	 */
 	private JSONArray getOrDefaultJsonArray(String key) throws JSONException {
@@ -160,7 +181,7 @@ public class Nim {
 		String move;
 		do {
 			move = ScannerIO.readLine();
-		} while(!isPlayableMove(move));
+		} while (!isPlayableMove(move));
 		return move;
 	}
 
@@ -173,12 +194,13 @@ public class Nim {
 	 */
 	private boolean isPlayableMove(String playedMove) throws JSONException {
 		JSONArray moves = getPlayableMoves(currentPosition);
-		boolean playableMove = false;
-		for(int moveNum = 0; moveNum < moves.length(); moveNum++) {
+		for (int moveNum = 0; moveNum < moves.length(); moveNum++) {
 			String move = moves.getString(moveNum);
-			playableMove = (move.equals(playedMove)) ? true : playableMove;
+			if (move.equals(playedMove)) {
+				return true;
+			}
 		}
-		return playableMove;
+		return false;
 	}
 
 	/**
